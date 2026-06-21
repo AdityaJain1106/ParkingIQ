@@ -1,0 +1,15 @@
+[build]
+  # Build directory where static files will be placed
+  publish = "dist"
+  
+  # Command to assemble the static frontend from the Flask layout
+  # (Netlify runs in a Linux container, so standard bash shell syntax works)
+  command = "mkdir -p dist && cp templates/index.html dist/index.html && cp -r static dist/"
+
+[[redirects]]
+  # Proxy all API requests to the Render backend
+  from = "/api/*"
+  # Replace the URL below with your actual Render backend Web Service URL
+  to = "https://YOUR-RENDER-BACKEND-NAME.onrender.com/api/:splat"
+  status = 200
+  force = true

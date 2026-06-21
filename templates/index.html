@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParkingIQ — Traffic Impact Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">🅿</div>
+    <div>
+      <span class="nav-logo-name">ParkingIQ</span>
+      <span class="nav-logo-tag">Traffic Impact Intelligence</span>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="#upload"    class="nav-link">Upload</a>
+    <a href="#dashboard" class="nav-link">Dashboard</a>
+    <a href="#heatmap"   class="nav-link">Heatmap</a>
+    <a href="#priority"  class="nav-link">Priority Index</a>
+  </div>
+  <div class="nav-status" id="navStatus">
+    <span class="status-dot idle"></span> Ready
+  </div>
+</nav>
+
+<!-- ── HERO ────────────────────────────────────────────────────────── -->
+<section class="hero" id="upload">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">AI-Driven Enforcement Intelligence</div>
+    <h1 class="hero-title">
+      Detect illegal parking hotspots.<br>
+      <span class="hero-title-accent">Quantify congestion impact.</span>
+    </h1>
+    <p class="hero-sub">Upload a parking violations CSV — get traffic delay scores, speed reduction estimates, geo-heatmaps, and an enforcement priority index for every junction.</p>
+
+    <!-- Upload zone -->
+    <div class="upload-card" id="uploadCard">
+      <label class="drop-zone" id="dropZone">
+        <input type="file" id="csvInput" accept=".csv" hidden>
+        <div class="drop-icon">📂</div>
+        <div class="drop-title">Drop your violations CSV here</div>
+        <div class="drop-sub">or <span class="drop-link">browse files</span> · CSV only · any size</div>
+        <div class="drop-cols">
+          Expected columns: <code>violation_type</code> · <code>vehicle_type</code> · <code>latitude</code> · <code>longitude</code> · <code>created_datetime</code> · <code>junction_name</code>
+        </div>
+      </label>
+
+      <!-- Progress -->
+      <div class="progress-wrap" id="progressWrap" style="display:none">
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <div class="progress-msg" id="progressMsg">Initialising…</div>
+        <div class="progress-pct" id="progressPct">0%</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── DASHBOARD ────────────────────────────────────────────────────── -->
+<section class="section" id="dashboard" style="display:none">
+  <div class="section-header">
+    <div class="section-eyebrow">Output — Module 1</div>
+    <h2 class="section-title">Traffic Impact Dashboard</h2>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics-grid" id="metricsGrid"></div>
+
+  <!-- Charts row 1 -->
+  <div class="charts-2col">
+    <div class="chart-card">
+      <div class="chart-card-title">Hourly Impact Pattern <span class="badge">24h</span></div>
+      <div class="chart-wrap"><canvas id="hourlyChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Violation Type Breakdown</div>
+      <div class="chart-wrap"><canvas id="violChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts row 2 -->
+  <div class="charts-3col">
+    <div class="chart-card">
+      <div class="chart-card-title">Vehicle Type Distribution</div>
+      <div class="chart-wrap"><canvas id="vehChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Risk Tier Split</div>
+      <div class="chart-wrap"><canvas id="tierChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Monthly Trend</div>
+      <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HEATMAP ──────────────────────────────────────────────────────── -->
+<section class="section" id="heatmap" style="display:none">
+  <div class="section-header">
+    <div class="section-eyebrow">Output — Module 2</div>
+    <h2 class="section-title">Dynamic Congestion Heatmap</h2>
+    <p class="section-desc">Geo-spatial overlay of violation density weighted by traffic impact score. Use the timeline to filter by time of day. Click any marker for full stats.</p>
+  </div>
+
+  <!-- ── Timeline slider bar ── -->
+  <div class="slider-bar">
+    <div class="slider-toggle-row">
+      <span class="slider-label-main">View mode</span>
+      <div class="slider-mode-btns">
+        <button class="smode-btn active" id="btnAll"      onclick="setSlot('all',      this)">🗺 All time</button>
+        <button class="smode-btn"        id="btnNight"    onclick="setSlot('night',    this)">🌙 Night</button>
+        <button class="smode-btn"        id="btnMorning"  onclick="setSlot('morning',  this)">🌅 Morning</button>
+        <button class="smode-btn"        id="btnAfternoon" onclick="setSlot('afternoon',this)">☀️ Afternoon</button>
+        <button class="smode-btn"        id="btnEvening"  onclick="setSlot('evening',  this)">🌆 Evening</button>
+      </div>
+      <span class="slot-range-label" id="slotRangeLabel">All 24 hours</span>
+    </div>
+  </div>
+
+  <!-- Single iframe — src swaps on slot change -->
+  <div class="map-container">
+    <iframe id="mapFrame" src="" style="width:100%;height:600px;border:none;border-radius:12px;"></iframe>
+  </div>
+
+  <div class="map-legend-row">
+    <div class="legend-item"><span class="legend-dot" style="background:#ff2222"></span>URGENT &gt;75</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#ff8800"></span>PRIORITY 50–75</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#4488ff"></span>MODERATE 25–50</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#44cc44"></span>ROUTINE &lt;25</div>
+    <div class="legend-sep"></div>
+    <div class="legend-item"><span class="heatmap-grad"></span>Low → High impact intensity</div>
+  </div>
+</section>
+
+<!-- ── PRIORITY INDEX ───────────────────────────────────────────────── -->
+<section class="section" id="priority" style="display:none">
+  <div class="section-header">
+    <div class="section-eyebrow">Output — Module 3</div>
+    <h2 class="section-title">Enforcement Prioritization Index</h2>
+    <p class="section-desc">Composite 0–100 score per junction combining impact severity, delay burden, recurrence, and peak-hour concentration.</p>
+  </div>
+
+  <div class="epi-formula">
+    <div class="formula-title">EPI Formula</div>
+    <div class="formula-body">
+      EPI = <span class="fw">40%</span> Avg Impact Score
+          + <span class="fw">25%</span> Total Delay Burden
+          + <span class="fw">15%</span> Critical/High Violation Share
+          + <span class="fw">10%</span> Daily Recurrence
+          + <span class="fw">10%</span> Peak-Hour Concentration
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="priority-table" id="priorityTable">
+      <thead>
+        <tr>
+          <th>#</th><th>Junction</th><th>EPI Score</th><th>Tier</th>
+          <th>Violations</th><th>Avg Delay</th><th>Daily Hrs Lost</th>
+          <th>Avg Speed ↓</th><th>Critical</th>
+        </tr>
+      </thead>
+      <tbody id="priorityBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── DOWNLOADS ────────────────────────────────────────────────────── -->
+<section class="section" id="downloads" style="display:none">
+  <div class="section-header">
+    <div class="section-eyebrow">Outputs</div>
+    <h2 class="section-title">Download Results</h2>
+  </div>
+  <div class="downloads-grid" id="downloadsGrid"></div>
+</section>
+
+<!-- ── FOOTER ───────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <span>ParkingIQ · AI-driven enforcement intelligence · Built with Flask + Chart.js + Folium</span>
+</footer>
+
+<script src="/static/js/main.js"></script>
+</body>
+</html>
