@@ -480,7 +480,7 @@ def make_charts(df, junctions, output_dir):
 
     # 9. Geo scatter
     ax9 = fig.add_subplot(4, 3, (10, 11)); ax9.set_facecolor(PANEL)
-    samp = df.sample(min(2000, len(df)), random_state=42)
+    samp = df.sample(min(200, len(df)), random_state=42)
     sc = ax9.scatter(samp["lon"], samp["lat"], c=samp["impact_score"], cmap="RdYlGn_r", s=4, alpha=0.4, linewidths=0)
     for _, jr in junctions.head(15).iterrows():
         ax9.scatter(jr["lon"], jr["lat"], s=90, color="white", edgecolors="#ff6b35", linewidths=1.5, zorder=5)
