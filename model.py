@@ -365,9 +365,6 @@ def make_heatmap(df, junctions, output_dir):
     out   = Path(output_dir)
 
     base    = df[["lat","lon","impact_score","hour","junction_name"]].dropna(subset=["lat","lon","hour"])
-
-if len(base) > 20000:
-    base = base.sample(20000, random_state=42)
     total_n = len(base)
 
     slots = [
