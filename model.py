@@ -176,8 +176,8 @@ def aggregate_junctions(df):
 
 
 def train_impact_predictor(df, output_dir):
-    if len(df) > 200000:
-        df = df.sample(200000, random_state=42)
+    if len(df) > 50000:
+        df = df.sample(50000, random_state=42)
     
     le_viol = LabelEncoder(); le_veh = LabelEncoder(); le_ps = LabelEncoder()
     df["viol_enc"] = le_viol.fit_transform(df["primary_violation"])
