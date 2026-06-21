@@ -56,7 +56,21 @@ def extract_primary(vt):
 
 
 def load_and_prepare(path):
-    df = pd.read_csv(path)
+    use_cols = [
+        "created_datetime",
+        "violation_type",
+        "latitude",
+        "longitude",
+        "vehicle_type",
+        "junction_name",
+        "police_station"
+    ]
+
+    df = pd.read_csv(
+        path,
+        usecols=lambda c: c in use_cols,
+        low_memory=True
+    )
     for col in ["created_datetime","created_dt","datetime"]:
         if col in df.columns:
             df["_dt"] = pd.to_datetime(df[col], utc=True, errors="coerce"); break
@@ -89,7 +103,6 @@ def load_and_prepare(path):
 
 
 def compute_traffic_impact(df):
-    df = df.copy()
     df["severity_score"] = df["primary_violation"].map(VIOLATION_SEVERITY).fillna(0.4)
     df["vehicle_size"]   = df["vehicle_type"].map(VEHICLE_SIZE).fillna(1.0)
     df["peak_factor"]    = df["hour"].map(PEAK_WEIGHT).fillna(2.0)
