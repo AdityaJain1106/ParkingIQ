@@ -365,6 +365,9 @@ def make_heatmap(df, junctions, output_dir):
     out   = Path(output_dir)
 
     base    = df[["lat","lon","impact_score","hour","junction_name"]].dropna(subset=["lat","lon","hour"])
+
+if len(base) > 20000:
+    base = base.sample(20000, random_state=42)
     total_n = len(base)
 
     slots = [
@@ -480,7 +483,7 @@ def make_charts(df, junctions, output_dir):
 
     # 9. Geo scatter
     ax9 = fig.add_subplot(4, 3, (10, 11)); ax9.set_facecolor(PANEL)
-    samp = df.sample(min(5000, len(df)), random_state=42)
+    samp = df.sample(min(2000, len(df)), random_state=42)
     sc = ax9.scatter(samp["lon"], samp["lat"], c=samp["impact_score"], cmap="RdYlGn_r", s=4, alpha=0.4, linewidths=0)
     for _, jr in junctions.head(15).iterrows():
         ax9.scatter(jr["lon"], jr["lat"], s=90, color="white", edgecolors="#ff6b35", linewidths=1.5, zorder=5)
